@@ -1,0 +1,71 @@
+---
+# jenkins_plugin module doesn't support password files.
+- name: Get Jenkins admin password from file.
+  slurp:
+    src: "{{ jenkins_admin_password_file }}"
+  register: adminpasswordfile
+  no_log: True
+  when: jenkins_admin_password_file != ""
+
+- name: Set Jenkins admin password fact.
+  set_fact:
+    jenkins_admin_password: "{{ adminpasswordfile['stdout'] | default(jenkins_admin_password) }}"
+  no_log: True
+
+- name: Get Jenkins admin token from file.
+  slurp:
+    src: "{{ jenkins_admin_token_file }}"
+  register: admintokenfile
+  no_log: True
+  when: jenkins_admin_token_file != ""
+
+- name: Set Jenkins admin token fact.
+  set_fact:
+    jenkins_admin_token: "{{ admintokenfile['stdout'] | default(jenkins_admin_token) }}"
+  no_log: True
+
+# Update Jenkins so that plugin updates don't fail.
+- name: Create update directory
+  file:
+    path: "{{ jenkins_home }}/updates"
+    state: directory
+    owner: jenkins
+    group: jenkins
+
+#- meta: flush_handlers
+
+- name: sleep for 300 seconds and continue with play
+  wait_for: timeout=30
+#  delegate_to: localhost
+
+#- name: Wait for Jenkins to start up before proceeding.
+#  shell: "curl -D - --silent --max-time 5 http://{{ jenkins_hostname }}:{{ jenkins_http_port }}{{ jenkins_url_prefix }}/cli/"
+#  register: result
+#  until: (result.stdout.find("403 Forbidden") != -1) or (result.stdout.find("200 OK") != -1) and (result.stdout.find("Please wait while") == -1)
+
+- name: Install Jenkins plugins using password.
+  jenkins_plugin:
+    name: "{{ item }}"
+    jenkins_home: "{{ jenkins_home }}"
+    params:
+      url_username: "{{ jenkins_admin_username }}"
+    url_password: "{{ jenkins_admin_password }}"
+    state: "{{ jenkins_plugins_state }}"
+    timeout: "{{ jenkins_plugin_timeout }}"
+    updates_expiration: "{{ jenkins_plugin_updates_expiration }}"
+    url: "http://{{ jenkins_hostname }}:{{ jenkins_http_port }}{{ jenkins_url_prefix }}"
+    updates_url: "http://updates.jenkins-ci.org"
+  with_items: "{{ jenkins_plugins }}"
+  when: jenkins_admin_password != ""
+  notify: restart jenkins
+
+- name: Install Jenkins plugins using token.
+  jenkins_plugin:
+    name: "{{ item }}"
+    params:
+      url_token: "{{ jenkins_admin_token }}"
+    updates_expiration: "{{ jenkins_plugin_updates_expiration }}"
+    url: "http://{{ jenkins_hostname }}:{{ jenkins_http_port }}{{ jenkins_url_prefix }}"
+  with_items: "{{ jenkins_plugins }}"
+  when: jenkins_admin_token != ""
+  notify: restart jenkins

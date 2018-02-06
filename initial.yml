@@ -1,0 +1,20 @@
+- hosts: all
+  become: true
+  tasks:
+    - name: Install default packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+        update_cache: yes
+      with_items:
+        - htop
+        - iftop
+        - vim
+        - screen
+        - tmux
+        - ntp
+        - language-pack-en
+        - language-pack-en-base
+        - manpages
+        - sudo
+

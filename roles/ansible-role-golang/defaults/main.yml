@@ -1,0 +1,26 @@
+---
+# defaults file for fubarhouse-golang
+
+# Go
+go_reget: false
+go_install_clean: false
+go_version: "1.9.3"
+go_uninstall: false
+go_custom_mirror: https://storage.googleapis.com/golang
+go_temporary_dir: /tmp
+mode_codebase: 0755
+mode_workspace: 0755
+
+build_go_from_source: false
+install_go_bootstrap: false
+go_build_script: make.bash
+
+# Go get
+go_get:
+- name: logrus
+  url: github.com/sirupsen/logrus
+go_install: []
+
+# Configuration
+shell_profiles:
+- .bash_profile

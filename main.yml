@@ -1,0 +1,10 @@
+---
+#- hosts: jenkins_00
+- hosts: all
+  become: True
+  name: "jenkins installation"
+  roles:
+    - role: ansible-role-java
+    - role: ansible-role-jenkins
+    - role: ansible-nexus3-oss
+    - { role: ansible-role-golang, become: yes }
